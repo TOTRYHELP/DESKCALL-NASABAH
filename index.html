@@ -396,13 +396,35 @@ PNM–ULaMM Umbulharjo Yogyakarta.`;
             showAlert('Template pesan berhasil diperbarui!', 'success');
         }
 
+        // Helper untuk mengubah tanggal "DD/MM/YYYY" menjadi "01 AGUSTUS 2026"
+        function formatTanggalPesan(strDate) {
+            if (!strDate) return '-';
+            const parts = strDate.split('/');
+            if (parts.length === 3) {
+                const day = parts[0].padStart(2, '0');
+                const monthIndex = parseInt(parts[1], 10) - 1;
+                const year = parts[2];
+                
+                const bulanIndo = [
+                    'JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI',
+                    'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER'
+                ];
+                
+                if (monthIndex >= 0 && monthIndex < 12) {
+                    return `${day} ${bulanIndo[monthIndex]} ${year}`;
+                }
+            }
+            return strDate;
+        }
+
         function getFormattedMessage(nasabah, customTagihan = null) {
             let template = localStorage.getItem('pnm_wa_template') || DEFAULT_TEMPLATE;
             const tagihanVal = customTagihan !== null ? customTagihan : unformatRupiah(nasabah.angsuran);
+            const formattedJT = formatTanggalPesan(nasabah.tanggalJt);
             
             return template
                 .replace(/\(NAMA\)/g, nasabah.nama || '')
-                .replace(/\(TANGGAL JT\)/g, nasabah.tanggalJt || '')
+                .replace(/\(TANGGAL JT\)/g, formattedJT)
                 .replace(/\(TAGIHAN\)/g, "Rp " + formatRupiah(tagihanVal))
                 .replace(/\(BRIVA\)/g, nasabah.briva || '-');
         }
