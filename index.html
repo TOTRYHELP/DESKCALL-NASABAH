@@ -241,7 +241,7 @@
                 <div class="flex flex-col sm:flex-row lg:flex-col gap-2.5 min-w-[210px] justify-center">
                     <button onclick="sendDirectWAFromCard()" class="bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white py-2.5 px-4 rounded-xl font-semibold text-xs flex items-center justify-center gap-2 shadow-lg transition">
                         <i class="fa-brands fa-whatsapp text-base"></i>
-                        <span>Kirim WA Web (Direct Room)</span>
+                        <span>Kirim WA Direct Room</span>
                     </button>
                     <button onclick="sendFonnteFromCard()" id="btnCardFonnte" class="bg-blue-600 hover:bg-blue-500 active:scale-95 text-white py-2.5 px-4 rounded-xl font-semibold text-xs flex items-center justify-center gap-2 shadow-lg transition">
                         <i class="fa-solid fa-paper-plane text-xs"></i>
@@ -634,11 +634,11 @@ PNM–ULaMM Umbulharjo Yogyakarta.`;
                         <!-- Kolom Aksi Kirim Pesan -->
                         <td class="py-3.5 px-4">
                             <div class="flex items-center justify-center gap-1.5">
-                                <!-- WA Web Direct -->
-                                <button onclick="sendWAWebDirect(${originalIndex})" title="Kirim via WhatsApp Web (Direct Chat)" 
+                                <!-- WA Direct me -->
+                                <button onclick="sendWAWebDirect(${originalIndex})" title="Kirim via WhatsApp Direct Chat Room" 
                                     class="bg-emerald-500 hover:bg-emerald-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 shadow-sm transition active:scale-95">
                                     <i class="fa-brands fa-whatsapp text-sm"></i>
-                                    <span>WA Web</span>
+                                    <span>WA Direct</span>
                                 </button>
 
                                 <!-- Fonnte API -->
@@ -662,7 +662,7 @@ PNM–ULaMM Umbulharjo Yogyakarta.`;
             tbody.innerHTML = html;
         }
 
-        // WhatsApp Web Direct Action
+        // WhatsApp Direct Action (wa.me)
         function sendWAWebDirect(index) {
             const nasabah = rawData[index];
             const hp = sanitizePhoneNumber(nasabah.nomorHp);
@@ -676,11 +676,11 @@ PNM–ULaMM Umbulharjo Yogyakarta.`;
 
             const message = getFormattedMessage(nasabah, customTagihan);
             const encodedMsg = encodeURIComponent(message);
-            const waUrl = `https://web.whatsapp.com/send?phone=${hp}&text=${encodedMsg}`;
+            const waUrl = `https://wa.me/${hp}?text=${encodedMsg}`;
 
             window.open(waUrl, '_blank');
 
-            const logText = `[${getTodayFormatted()}] Sent via WA Web`;
+            const logText = `[${getTodayFormatted()}] Sent via WA Direct`;
             updateLogToSpreadsheet(nasabah.rowIndex, logText, index);
         }
 
@@ -744,8 +744,8 @@ PNM–ULaMM Umbulharjo Yogyakarta.`;
             const hp = sanitizePhoneNumber(nasabah.nomorHp);
             const message = getFormattedMessage(nasabah, customTagihan);
 
-            window.open(`https://web.whatsapp.com/send?phone=${hp}&text=${encodeURIComponent(message)}`, '_blank');
-            updateLogToSpreadsheet(nasabah.rowIndex, `[${getTodayFormatted()}] Sent via WA Web`, selectedNasabahIndex);
+            window.open(`https://wa.me/${hp}?text=${encodeURIComponent(message)}`, '_blank');
+            updateLogToSpreadsheet(nasabah.rowIndex, `[${getTodayFormatted()}] Sent via WA Direct`, selectedNasabahIndex);
         }
 
         async function sendFonnteFromCard() {
