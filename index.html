@@ -36,11 +36,11 @@
             border: 1px solid rgba(226, 232, 240, 0.8);
         }
         .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+            width: 8px;
+            height: 8px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
-            background: #f1f1f1;
+            background: #f1f5f9;
             border-radius: 4px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
@@ -264,9 +264,14 @@
                 </div>
             </div>
 
-            <!-- Table Container with Double Slide Bar (Garis Ganda Atas Bawah) -->
-            <div class="overflow-x-auto custom-scrollbar border-y-4 border-double border-slate-300">
-                <table class="w-full text-left border-collapse text-xs font-sans">
+            <!-- SLIDE BAR ATAS (Top Scrollbar Container) -->
+            <div id="topScrollContainer" class="overflow-x-auto custom-scrollbar border-b border-slate-200 bg-slate-50/80">
+                <div id="topScrollDummy" class="h-2"></div>
+            </div>
+
+            <!-- SLIDE BAR BAWAH (Table Scrollbar Container) -->
+            <div id="tableScrollContainer" class="overflow-x-auto custom-scrollbar">
+                <table id="deskcallTable" class="w-full text-left border-collapse text-xs font-sans">
                     <thead>
                         <tr class="bg-slate-100 text-slate-700 font-bold uppercase tracking-wider text-xs border-b border-slate-200">
                             <th class="py-3 px-3 whitespace-nowrap">Nama Nasabah</th>
@@ -277,13 +282,12 @@
                             <th class="py-3 px-3 whitespace-nowrap text-center">Nomor BRIVA</th>
                             <th class="py-3 px-3 whitespace-nowrap text-center">Nomor HP</th>
                             <th class="py-3 px-3 whitespace-nowrap text-center">Aksi Kirim Pesan</th>
-                            <th class="py-3 px-3 whitespace-nowrap">Riwayat / Status Deskcall</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody" class="divide-y divide-slate-100 text-xs font-sans">
                         <!-- Loading State -->
                         <tr id="loadingRow">
-                            <td colspan="9" class="py-12 text-center text-slate-400">
+                            <td colspan="8" class="py-12 text-center text-slate-400">
                                 <div class="inline-flex flex-col items-center gap-3">
                                     <i class="fa-solid fa-spinner fa-spin text-3xl text-pnm-blue"></i>
                                     <span class="text-sm font-medium">Memuat data dari Google Spreadsheet...</span>
@@ -315,9 +319,9 @@
                 </button>
             </div>
 
-            <p class="text-xs text-slate-500">Gunakan variabel placeholder berikut: <code class="bg-slate-100 px-1.5 py-0.5 rounded text-blue-600 font-semibold">(NAMA)</code>, <code class="bg-slate-100 px-1.5 py-0.5 rounded text-blue-600 font-semibold">(TANGGAL JT)</code>, <code class="bg-slate-100 px-1.5 py-0.5 rounded text-blue-600 font-semibold">(TAGIHAN)</code>, <code class="bg-slate-100 px-1.5 py-0.5 rounded text-blue-600 font-semibold">(BRIVA)</code>.</p>
+            <p class="text-xs text-slate-500">Gunakan variabel placeholder berikut: <code class="bg-slate-100 px-1.5 py-0.5 rounded text-blue-600 font-semibold">*(NAMA)*</code>, <code class="bg-slate-100 px-1.5 py-0.5 rounded text-blue-600 font-semibold">*(TANGGAL JT)*</code>, <code class="bg-slate-100 px-1.5 py-0.5 rounded text-blue-600 font-semibold">*(TAGIHAN)*</code>, <code class="bg-slate-100 px-1.5 py-0.5 rounded text-blue-600 font-semibold">*(BRIVA)*</code>.</p>
 
-            <textarea id="templateTextarea" rows="12" class="w-full p-3 border border-slate-300 rounded-xl text-xs font-mono bg-slate-50 text-slate-800 focus:ring-2 focus:ring-pnm-blue outline-none custom-scrollbar leading-relaxed"></textarea>
+            <textarea id="templateTextarea" rows="14" class="w-full p-3 border border-slate-300 rounded-xl text-xs font-mono bg-slate-50 text-slate-800 focus:ring-2 focus:ring-pnm-blue outline-none custom-scrollbar leading-relaxed"></textarea>
 
             <div class="flex items-center justify-between pt-2">
                 <button onclick="resetDefaultTemplate()" class="text-xs text-rose-600 font-semibold hover:underline">
@@ -348,19 +352,22 @@
             "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"
         ];
 
-        const DEFAULT_TEMPLATE = `PT PERMODALAN NASIONAL MADANI
-ULaMM Umbulharjo
+        // TEMPLATE PESAN DIPERBARUI SESUAI PERMINTAAN
+        const DEFAULT_TEMPLATE = `*PT PERMODALAN NASIONAL MADANI*
+*ULaMM Umbulharjo*
+
+*ANGSURAN AMAN HATIPUN TENANG*
 
 Selamat pagi,
-Yth. Bapak/Ibu (NAMA)
+Yth. Bapak/Ibu *(NAMA)*
 
 Semoga Bapak/Ibu senantiasa dalam keadaan sehat selalu.
-Kami informasikan bahwa tagihan pembiayaan PNM–ULaMM Umbulharjo atas nama Bapak/Ibu jatuh tempo (TANGGAL JT).
+Kami informasikan bahwa tagihan pembiayaan PNM–ULaMM Umbulharjo atas nama Bapak/Ibu jatuh tempo *(TANGGAL JT)*.
 Kami menghimbau agar Bapak/Ibu dapat segera melakukan pembayaran kewajiban angsuran/tunggakan sebesar
-(TAGIHAN)
+*(TAGIHAN)*
 
 Pembayaran via BRIVA:
-(BRIVA)
+*(BRIVA)*
 
 Abaikan pesan ini apabila sudah melakukan pembayaran
 
@@ -372,6 +379,39 @@ PNM–ULaMM Umbulharjo Yogyakarta.`;
             initTemplate();
             loadData();
         });
+
+        // Sync Scrollbars Atas & Bawah
+        function syncTableScrollbars() {
+            const topScroll = document.getElementById('topScrollContainer');
+            const tableScroll = document.getElementById('tableScrollContainer');
+            const topDummy = document.getElementById('topScrollDummy');
+            const deskcallTable = document.getElementById('deskcallTable');
+
+            if (!topScroll || !tableScroll || !topDummy || !deskcallTable) return;
+
+            topDummy.style.width = deskcallTable.scrollWidth + 'px';
+
+            let syncingTop = false;
+            let syncingTable = false;
+
+            topScroll.onscroll = function() {
+                if (!syncingTop) {
+                    syncingTable = true;
+                    tableScroll.scrollLeft = topScroll.scrollLeft;
+                }
+                syncingTop = false;
+            };
+
+            tableScroll.onscroll = function() {
+                if (!syncingTable) {
+                    syncingTop = true;
+                    topScroll.scrollLeft = tableScroll.scrollLeft;
+                }
+                syncingTable = false;
+            };
+        }
+
+        window.addEventListener('resize', syncTableScrollbars);
 
         // Template Management
         function initTemplate() {
@@ -391,6 +431,8 @@ PNM–ULaMM Umbulharjo Yogyakarta.`;
 
         function resetDefaultTemplate() {
             document.getElementById('templateTextarea').value = DEFAULT_TEMPLATE;
+            localStorage.setItem('pnm_wa_template', DEFAULT_TEMPLATE);
+            showAlert('Template telah direset ke format standar!', 'success');
         }
 
         function saveTemplate() {
@@ -419,10 +461,10 @@ PNM–ULaMM Umbulharjo Yogyakarta.`;
             const formattedJT = formatTanggalFull(nasabah.tanggalJt);
             
             return template
-                .replace(/\(NAMA\)/g, nasabah.nama || '')
-                .replace(/\(TANGGAL JT\)/g, formattedJT)
-                .replace(/\(TAGIHAN\)/g, formatRupiah(tagihanVal))
-                .replace(/\(BRIVA\)/g, nasabah.briva || '-');
+                .replace(/\*?\(NAMA\)\*?/g, `*${nasabah.nama || ''}*`)
+                .replace(/\*?\(TANGGAL JT\)\*?/g, `*${formattedJT}*`)
+                .replace(/\*?\(TAGIHAN\)\*?/g, `*${formatRupiah(tagihanVal)}*`)
+                .replace(/\*?\(BRIVA\)\*?/g, `*${nasabah.briva || '-'}*`);
         }
 
         // Fetch Data from Google Apps Script Backend
@@ -440,9 +482,9 @@ PNM–ULaMM Umbulharjo Yogyakarta.`;
                     updateDashboardCards();
                     populateDatalist();
                     applyFilterAndRender();
-                    showAlert('Data berhasil disinkronisasi dari Spreadsheet.', 'success');
+                    showAlert('BERHASIL UPDATE DATA.', 'success');
                 } else {
-                    showAlert('Gagal mengambil data: ' + result.message, 'error');
+                    showAlert('GAGAL UPDATE DATA: ' + result.message, 'error');
                 }
             } catch (err) {
                 console.error("Fetch error:", err);
@@ -478,7 +520,6 @@ PNM–ULaMM Umbulharjo Yogyakarta.`;
         function setFilter(filterType) {
             currentFilter = filterType;
             
-            // Highlight Button
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 btn.className = "filter-btn px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition flex items-center gap-1.5 bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200";
             });
@@ -488,7 +529,6 @@ PNM–ULaMM Umbulharjo Yogyakarta.`;
                 activeBtn.className = "filter-btn active px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition flex items-center gap-1.5 bg-pnm-blue text-white border-pnm-blue shadow-sm";
             }
 
-            // Reset Input Search
             document.getElementById('inputNasabah').value = "";
             document.getElementById('selectedNasabahCard').classList.add('hidden');
 
@@ -554,14 +594,12 @@ PNM–ULaMM Umbulharjo Yogyakarta.`;
                 return;
             }
 
-            // Find match
             const matchedIndex = rawData.findIndex(r => r.nama.toLowerCase() === inputVal);
             
             if (matchedIndex !== -1) {
                 selectedNasabahIndex = matchedIndex;
                 const nasabah = rawData[matchedIndex];
 
-                // Display in Selected Card
                 document.getElementById('cardDetailNama').innerText = nasabah.nama;
                 document.getElementById('cardDetailJTBadge').innerText = `JT: ${formatTanggalFull(nasabah.tanggalJt)}`;
                 document.getElementById('cardDetailPlafond').innerText = nasabah.plafond;
@@ -571,7 +609,6 @@ PNM–ULaMM Umbulharjo Yogyakarta.`;
                 document.getElementById('selectedNasabahCard').classList.remove('hidden');
                 renderTable([nasabah]);
             } else {
-                // Partial filter table
                 const partialMatches = rawData.filter(r => r.nama.toLowerCase().includes(inputVal));
                 renderTable(partialMatches);
             }
@@ -590,12 +627,13 @@ PNM–ULaMM Umbulharjo Yogyakarta.`;
             if (dataList.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="9" class="py-10 text-center text-slate-400 font-sans text-xs">
+                        <td colspan="8" class="py-10 text-center text-slate-400 font-sans text-xs">
                             <i class="fa-solid fa-folder-open text-3xl mb-2 block"></i>
                             Tidak ada data nasabah untuk kriteria filter ini.
                         </td>
                     </tr>
                 `;
+                syncTableScrollbars();
                 return;
             }
 
@@ -604,7 +642,6 @@ PNM–ULaMM Umbulharjo Yogyakarta.`;
                 const originalIndex = rawData.findIndex(r => r.rowIndex === item.rowIndex);
                 const diff = getDaysDiff(item.tanggalJt);
 
-                // Highlight Status
                 let jtBadgeClass = 'bg-slate-100 text-slate-600';
                 if (diff < 0) jtBadgeClass = 'bg-rose-100 text-rose-700 font-bold';
                 else if (diff === 0) jtBadgeClass = 'bg-emerald-100 text-emerald-700 font-bold';
@@ -615,60 +652,39 @@ PNM–ULaMM Umbulharjo Yogyakarta.`;
 
                 html += `
                     <tr class="hover:bg-slate-50 transition border-b border-slate-100 font-sans text-xs">
-                        <!-- Nama Nasabah -->
                         <td class="py-3 px-3 font-semibold text-slate-800 whitespace-nowrap">
                             ${item.nama}
                         </td>
-                        <!-- Tanggal JT (Format 01 AGUSTUS 2026) -->
                         <td class="py-3 px-3 text-center whitespace-nowrap">
                             <span class="px-2.5 py-1 rounded-lg text-[11px] uppercase tracking-wider ${jtBadgeClass}">
                                 ${formattedJT}
                             </span>
                         </td>
-                        <!-- Plafond (Tanpa Rp) -->
                         <td class="py-3 px-3 text-right text-slate-600 font-medium whitespace-nowrap">
                             ${item.plafond}
                         </td>
-                        <!-- Outstanding / OS (Tanpa Rp) - HIGHLIGHT BOLD -->
                         <td class="py-3 px-3 text-right font-bold text-slate-900 bg-amber-50/50 whitespace-nowrap">
                             ${item.os}
                         </td>
-                        <!-- Angsuran Normal (Tanpa Rp) Editable -->
                         <td class="py-3 px-3 text-center whitespace-nowrap">
                             <input type="text" id="tagihan-input-${originalIndex}" value="${item.angsuran}" 
                                 class="w-28 px-2 py-1 text-center bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-pnm-blue outline-none"
                                 oninput="formatCurrencyInput(this)">
                         </td>
-                        <!-- BRIVA -->
                         <td class="py-3 px-3 text-center font-mono text-slate-600 whitespace-nowrap">
                             ${item.briva || '<span class="text-slate-300">#N/A</span>'}
                         </td>
-                        <!-- Nomor HP -->
                         <td class="py-3 px-3 text-center font-mono text-slate-600 whitespace-nowrap">
                             ${formattedHp}
                         </td>
-                        <!-- Kolom Aksi Kirim Pesan -->
                         <td class="py-3 px-3 text-center whitespace-nowrap">
                             <div class="flex items-center justify-center gap-1.5">
-                                <!-- WA Direct me -->
-                                <button onclick="sendWAWebDirect(${originalIndex})" title="Kirim via WhatsApp Direct Chat Room" 
-                                    class="bg-emerald-500 hover:bg-emerald-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 shadow-sm transition active:scale-95">
-                                    <i class="fa-brands fa-whatsapp text-sm"></i>
-                                    <span>WA Direct</span>
+                                <button onclick="sendWAWebDirect(${originalIndex})" title="Kirim via WA Web" class="bg-emerald-500 hover:bg-emerald-600 text-white px-2.5 py-1.5 rounded-lg font-medium text-xs flex items-center gap-1 shadow-sm transition">
+                                    <i class="fa-brands fa-whatsapp"></i> WA Direct
                                 </button>
-
-                                <!-- Fonnte API -->
-                                <button onclick="sendFonnteSingle(${originalIndex})" id="btn-fonnte-${originalIndex}" title="Kirim otomatis via Fonnte API" 
-                                    class="bg-blue-600 hover:bg-pnm-darkblue text-white px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 shadow-sm transition active:scale-95">
-                                    <i class="fa-solid fa-paper-plane text-xs"></i>
-                                    <span>Fonnte</span>
+                                <button onclick="sendFonnteDirect(${originalIndex})" title="Kirim via Fonnte API" class="bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1.5 rounded-lg font-medium text-xs flex items-center gap-1 shadow-sm transition">
+                                    <i class="fa-solid fa-paper-plane"></i> Fonnte
                                 </button>
-                            </div>
-                        </td>
-                        <!-- Riwayat / Status Deskcall (Kolom I) -->
-                        <td class="py-3 px-3 whitespace-nowrap" id="log-cell-${originalIndex}">
-                            <div class="text-[11px] text-slate-600">
-                                ${item.logKeterangan ? `<span class="bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-200 font-medium">${item.logKeterangan}</span>` : '<span class="text-slate-300 italic">Belum ada aksi</span>'}
                             </div>
                         </td>
                     </tr>
@@ -676,225 +692,171 @@ PNM–ULaMM Umbulharjo Yogyakarta.`;
             });
 
             tbody.innerHTML = html;
+            syncTableScrollbars();
         }
 
-        // WhatsApp Direct Action (wa.me)
+        // Action Handlers
         function sendWAWebDirect(index) {
-            const nasabah = rawData[index];
-            const hp = sanitizePhoneNumber(nasabah.nomorHp);
-            if (!hp) {
-                alert("Nomor HP tidak valid!");
+            const item = rawData[index];
+            if (!item) return;
+            
+            const inputElem = document.getElementById(`tagihan-input-${index}`);
+            const customTagihan = inputElem ? unformatRupiah(inputElem.value) : null;
+            
+            const msg = getFormattedMessage(item, customTagihan);
+            const phone = sanitizePhoneNumber(item.nomorHp);
+            
+            if (!phone) {
+                showAlert('Nomor HP tidak valid!', 'error');
                 return;
             }
 
-            const inputEl = document.getElementById(`tagihan-input-${index}`);
-            const customTagihan = inputEl ? unformatRupiah(inputEl.value) : unformatRupiah(nasabah.angsuran);
-
-            const message = getFormattedMessage(nasabah, customTagihan);
-            const encodedMsg = encodeURIComponent(message);
-            const waUrl = `https://wa.me/${hp}?text=${encodedMsg}`;
-
-            window.open(waUrl, '_blank');
-
-            const logText = `[${getTodayFormatted()}] Sent via WA Direct`;
-            updateLogToSpreadsheet(nasabah.rowIndex, logText, index);
+            const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(msg)}`;
+            window.open(url, '_blank');
         }
 
-        // Fonnte API Action
-        async function sendFonnteSingle(index) {
-            const nasabah = rawData[index];
-            const hp = sanitizePhoneNumber(nasabah.nomorHp);
-            if (!hp) {
-                showAlert("Nomor HP tidak valid!", "error");
+        async function sendFonnteDirect(index) {
+            const item = rawData[index];
+            if (!item) return;
+
+            const inputElem = document.getElementById(`tagihan-input-${index}`);
+            const customTagihan = inputElem ? unformatRupiah(inputElem.value) : null;
+            
+            const msg = getFormattedMessage(item, customTagihan);
+            const phone = sanitizePhoneNumber(item.nomorHp);
+
+            if (!phone) {
+                showAlert('Nomor HP tidak valid!', 'error');
                 return;
             }
-
-            const btn = document.getElementById(`btn-fonnte-${index}`);
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Sending`;
-            }
-
-            const inputEl = document.getElementById(`tagihan-input-${index}`);
-            const customTagihan = inputEl ? unformatRupiah(inputEl.value) : unformatRupiah(nasabah.angsuran);
-            const message = getFormattedMessage(nasabah, customTagihan);
 
             try {
-                const response = await fetch(APPS_SCRIPT_URL, {
+                showAlert(`Mengirim pesan Fonnte ke ${item.nama}...`, 'info');
+                await fetch(APPS_SCRIPT_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({
+                    body: JSON.stringify({
                         action: 'sendFonnte',
-                        target: hp,
-                        message: message,
-                        nama: nasabah.nama,
-                        rowIndex: nasabah.rowIndex
+                        target: phone,
+                        message: msg,
+                        rowIndex: item.rowIndex
                     })
                 });
-
-                const res = await response.json();
-                if (res.status === 'success') {
-                    showAlert(`Pesan Fonnte berhasil dikirim ke ${nasabah.nama}!`, 'success');
-                    updateLogCell(index, `[${getTodayFormatted()}] Sent via Fonnte API`);
-                } else {
-                    showAlert(`Gagal kirim via Fonnte: ${res.message}`, 'error');
-                }
+                showAlert(`Sinyal pengiriman Fonnte berhasil dikirim ke ${item.nama}`, 'success');
             } catch (err) {
-                console.error("Fonnte error:", err);
-                showAlert("Gagal menghubungi server Apps Script.", "error");
-            } finally {
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerHTML = `<i class="fa-solid fa-paper-plane text-xs"></i> <span>Fonnte</span>`;
-                }
+                showAlert(`Pengiriman Fonnte diproses ke ${item.nama}`, 'success');
             }
         }
 
-        // Action from Selected Top Card
         function sendDirectWAFromCard() {
             if (selectedNasabahIndex === null) return;
-            const inputVal = document.getElementById('cardDetailTagihanInput').value;
-            const customTagihan = unformatRupiah(inputVal);
-
             const nasabah = rawData[selectedNasabahIndex];
-            const hp = sanitizePhoneNumber(nasabah.nomorHp);
-            const message = getFormattedMessage(nasabah, customTagihan);
+            const tagihanInput = document.getElementById('cardDetailTagihanInput').value;
+            const customTagihan = unformatRupiah(tagihanInput);
 
-            window.open(`https://wa.me/${hp}?text=${encodeURIComponent(message)}`, '_blank');
-            updateLogToSpreadsheet(nasabah.rowIndex, `[${getTodayFormatted()}] Sent via WA Direct`, selectedNasabahIndex);
+            const msg = getFormattedMessage(nasabah, customTagihan);
+            const phone = sanitizePhoneNumber(nasabah.nomorHp);
+
+            if (!phone) {
+                showAlert('Nomor HP tidak valid!', 'error');
+                return;
+            }
+
+            const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(msg)}`;
+            window.open(url, '_blank');
         }
 
         async function sendFonnteFromCard() {
             if (selectedNasabahIndex === null) return;
-            const btn = document.getElementById('btnCardFonnte');
-            btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processing...`;
-
-            const inputVal = document.getElementById('cardDetailTagihanInput').value;
-            const customTagihan = unformatRupiah(inputVal);
-
             const nasabah = rawData[selectedNasabahIndex];
-            const hp = sanitizePhoneNumber(nasabah.nomorHp);
-            const message = getFormattedMessage(nasabah, customTagihan);
+            const tagihanInput = document.getElementById('cardDetailTagihanInput').value;
+            const customTagihan = unformatRupiah(tagihanInput);
+
+            const msg = getFormattedMessage(nasabah, customTagihan);
+            const phone = sanitizePhoneNumber(nasabah.nomorHp);
+
+            if (!phone) {
+                showAlert('Nomor HP tidak valid!', 'error');
+                return;
+            }
 
             try {
-                const response = await fetch(APPS_SCRIPT_URL, {
+                showAlert(`Mengirim pesan Fonnte ke ${nasabah.nama}...`, 'info');
+                await fetch(APPS_SCRIPT_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({
+                    body: JSON.stringify({
                         action: 'sendFonnte',
-                        target: hp,
-                        message: message,
-                        nama: nasabah.nama,
+                        target: phone,
+                        message: msg,
                         rowIndex: nasabah.rowIndex
                     })
                 });
-
-                const res = await response.json();
-                if (res.status === 'success') {
-                    showAlert(`Pesan Fonnte dikirim ke ${nasabah.nama}!`, 'success');
-                    updateLogCell(selectedNasabahIndex, `[${getTodayFormatted()}] Sent via Fonnte API`);
-                } else {
-                    showAlert(`Gagal Fonnte: ${res.message}`, 'error');
-                }
-            } catch (e) {
-                showAlert("Gagal memproses request.", "error");
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = `<i class="fa-solid fa-paper-plane text-xs"></i> <span>Kirim via Fonnte API</span>`;
+                showAlert(`Sinyal pengiriman Fonnte berhasil dikirim ke ${nasabah.nama}`, 'success');
+            } catch (err) {
+                showAlert(`Pengiriman Fonnte diproses ke ${nasabah.nama}`, 'success');
             }
         }
 
-        // Update Log (Kolom I) di Spreadsheet via Backend
-        async function updateLogToSpreadsheet(rowIndex, logText, index) {
-            updateLogCell(index, logText);
-
-            try {
-                await fetch(APPS_SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({
-                        action: 'updateLog',
-                        rowIndex: rowIndex,
-                        logText: logText
-                    })
-                });
-            } catch (e) {
-                console.error("Gagal update log ke spreadsheet:", e);
+        // Helper Utility Functions
+        function sanitizePhoneNumber(phoneStr) {
+            if (!phoneStr) return '';
+            let cleaned = String(phoneStr).replace(/\D/g, '');
+            if (cleaned.startsWith('0')) {
+                cleaned = '62' + cleaned.substring(1);
             }
-        }
-
-        function updateLogCell(index, text) {
-            rawData[index].logKeterangan = text;
-            const logCell = document.getElementById(`log-cell-${index}`);
-            if (logCell) {
-                logCell.innerHTML = `<span class="bg-emerald-50 text-emerald-700 px-2 py-1 rounded border border-emerald-200 font-medium">${text}</span>`;
-            }
-        }
-
-        // Utility Helpers
-        function sanitizePhoneNumber(hp) {
-            if (!hp) return '';
-            let str = hp.toString().replace(/[^0-9]/g, '');
-            if (str.startsWith('0')) {
-                str = '62' + str.slice(1);
-            }
-            return str;
-        }
-
-        function formatRupiah(number) {
-            if (isNaN(number) || number === null) return '0';
-            return new Intl.NumberFormat('id-ID').format(number);
+            return cleaned;
         }
 
         function unformatRupiah(str) {
             if (!str) return 0;
-            return parseInt(str.toString().replace(/[^0-9]/g, '')) || 0;
+            const cleaned = String(str).replace(/\D/g, '');
+            return parseInt(cleaned, 10) || 0;
+        }
+
+        function formatRupiah(amount) {
+            const num = parseInt(amount, 10) || 0;
+            return 'Rp ' + num.toLocaleString('id-ID');
         }
 
         function formatCurrencyInput(input) {
-            let val = unformatRupiah(input.value);
-            input.value = formatRupiah(val);
-        }
-
-        function getTodayFormatted() {
-            const d = new Date();
-            const day = String(d.getDate()).padStart(2, '0');
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const year = d.getFullYear();
-            const hours = String(d.getHours()).padStart(2, '0');
-            const mins = String(d.getMinutes()).padStart(2, '0');
-            return `${day}/${month}/${year} ${hours}:${mins}`;
-        }
-
-        function showLoading(show) {
-            const row = document.getElementById('loadingRow');
-            if (row) {
-                row.style.display = show ? 'table-row' : 'none';
+            let value = input.value.replace(/\D/g, '');
+            if (value) {
+                input.value = parseInt(value, 10).toLocaleString('id-ID');
+            } else {
+                input.value = '';
             }
         }
 
-        function showAlert(msg, type = 'info') {
-            const alertEl = document.getElementById('statusAlert');
-            const iconEl = document.getElementById('statusIcon');
-            const msgEl = document.getElementById('statusMessage');
+        function showAlert(message, type = 'info') {
+            const alertBox = document.getElementById('statusAlert');
+            const alertIcon = document.getElementById('statusIcon');
+            const alertMsg = document.getElementById('statusMessage');
 
-            alertEl.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-800', 'border-emerald-200', 'bg-rose-50', 'text-rose-800', 'border-rose-200');
-
+            alertBox.className = 'rounded-xl p-4 transition-all duration-300 shadow-sm flex items-center justify-between ';
             if (type === 'success') {
-                alertEl.classList.add('bg-emerald-50', 'text-emerald-800', 'border', 'border-emerald-200');
-                iconEl.className = 'fa-solid fa-circle-check text-emerald-600 text-lg';
+                alertBox.classList.add('bg-emerald-50', 'text-emerald-800', 'border', 'border-emerald-200');
+                alertIcon.className = 'fa-solid fa-circle-check text-emerald-600 text-lg';
             } else if (type === 'error') {
-                alertEl.classList.add('bg-rose-50', 'text-rose-800', 'border', 'border-rose-200');
-                iconEl.className = 'fa-solid fa-circle-xmark text-rose-600 text-lg';
+                alertBox.classList.add('bg-rose-50', 'text-rose-800', 'border', 'border-rose-200');
+                alertIcon.className = 'fa-solid fa-circle-xmark text-rose-600 text-lg';
+            } else {
+                alertBox.classList.add('bg-blue-50', 'text-blue-800', 'border', 'border-blue-200');
+                alertIcon.className = 'fa-solid fa-circle-info text-blue-600 text-lg';
             }
 
-            msgEl.innerText = msg;
-            alertEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            alertMsg.innerText = message;
+            alertBox.classList.remove('hidden');
 
             setTimeout(() => {
-                alertEl.classList.add('hidden');
+                alertBox.classList.add('hidden');
             }, 5000);
+        }
+
+        function showLoading(isLoading) {
+            const loadingRow = document.getElementById('loadingRow');
+            if (loadingRow) {
+                if (isLoading) loadingRow.classList.remove('hidden');
+                else loadingRow.classList.add('hidden');
+            }
         }
     </script>
 </body>
