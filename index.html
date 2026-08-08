@@ -282,12 +282,13 @@
                             <th class="py-3 px-3 whitespace-nowrap text-center">Nomor BRIVA</th>
                             <th class="py-3 px-3 whitespace-nowrap text-center">Nomor HP</th>
                             <th class="py-3 px-3 whitespace-nowrap text-center">Aksi Kirim Pesan</th>
+                            <th class="py-3 px-3 whitespace-nowrap text-center">Riwayat</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody" class="divide-y divide-slate-100 text-xs font-sans">
                         <!-- Loading State -->
                         <tr id="loadingRow">
-                            <td colspan="8" class="py-12 text-center text-slate-400">
+                            <td colspan="9" class="py-12 text-center text-slate-400">
                                 <div class="inline-flex flex-col items-center gap-3">
                                     <i class="fa-solid fa-spinner fa-spin text-3xl text-pnm-blue"></i>
                                     <span class="text-sm font-medium">Memuat data dari Google Spreadsheet...</span>
@@ -467,6 +468,49 @@ PNM–ULaMM Umbulharjo Yogyakarta.`;
                 .replace(/\*?\(BRIVA\)\*?/g, `*${nasabah.briva || '-'}*`);
         }
 
+        // Helper untuk memformat Timestamp Riwayat
+        function getNowTimestamp() {
+            const now = new Date();
+            const d = String(now.getDate()).padStart(2, '0');
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const y = now.getFullYear();
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            return `${d}/${m}/${y} ${hh}:${mm}`;
+        }
+
+        // Simpan log ke Google Sheets (Sheet: operator, Kolom: I)
+        async function logActionToBackend(rowIndex, actionType) {
+            const timestampStr = `${actionType} (${getNowTimestamp()})`;
+            
+            // Timpa lokal state dulu agar UI langsung update
+            if (rawData[rowIndex]) {
+                rawData[rowIndex].riwayat = timestampStr;
+            }
+
+            // Re-render UI
+            if (document.getElementById('inputNasabah').value.trim()) {
+                onNasabahInput();
+            } else {
+                applyFilterAndRender();
+            }
+
+            try {
+                await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'logAction',
+                        sheetName: 'operator',
+                        column: 'I',
+                        rowIndex: rawData[rowIndex] ? rawData[rowIndex].rowIndex : rowIndex,
+                        riwayatText: timestampStr
+                    })
+                });
+            } catch (err) {
+                console.error("Gagal mencatat log ke backend:", err);
+            }
+        }
+
         // Fetch Data from Google Apps Script Backend
         async function loadData() {
             showLoading(true);
@@ -627,7 +671,7 @@ PNM–ULaMM Umbulharjo Yogyakarta.`;
             if (dataList.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="8" class="py-10 text-center text-slate-400 font-sans text-xs">
+                        <td colspan="9" class="py-10 text-center text-slate-400 font-sans text-xs">
                             <i class="fa-solid fa-folder-open text-3xl mb-2 block"></i>
                             Tidak ada data nasabah untuk kriteria filter ini.
                         </td>
@@ -687,6 +731,9 @@ PNM–ULaMM Umbulharjo Yogyakarta.`;
                                 </button>
                             </div>
                         </td>
+                        <td class="py-3 px-3 text-center font-mono text-slate-500 text-[11px] whitespace-nowrap">
+                            ${item.riwayat ? `<span class="bg-slate-100 text-slate-700 px-2 py-1 rounded font-semibold border border-slate-200">${item.riwayat}</span>` : '<span class="text-slate-300">-</span>'}
+                        </td>
                     </tr>
                 `;
             });
@@ -711,6 +758,9 @@ PNM–ULaMM Umbulharjo Yogyakarta.`;
                 return;
             }
 
+            // Catat Riwayat
+            logActionToBackend(index, 'WA Direct');
+
             const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(msg)}`;
             window.open(url, '_blank');
         }
@@ -729,6 +779,9 @@ PNM–ULaMM Umbulharjo Yogyakarta.`;
                 showAlert('Nomor HP tidak valid!', 'error');
                 return;
             }
+
+            // Catat Riwayat
+            logActionToBackend(index, 'Fonnte');
 
             try {
                 showAlert(`Mengirim pesan Fonnte ke ${item.nama}...`, 'info');
@@ -761,6 +814,9 @@ PNM–ULaMM Umbulharjo Yogyakarta.`;
                 return;
             }
 
+            // Catat Riwayat
+            logActionToBackend(selectedNasabahIndex, 'WA Direct');
+
             const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(msg)}`;
             window.open(url, '_blank');
         }
@@ -778,6 +834,9 @@ PNM–ULaMM Umbulharjo Yogyakarta.`;
                 showAlert('Nomor HP tidak valid!', 'error');
                 return;
             }
+
+            // Catat Riwayat
+            logActionToBackend(selectedNasabahIndex, 'Fonnte');
 
             try {
                 showAlert(`Mengirim pesan Fonnte ke ${nasabah.nama}...`, 'info');
