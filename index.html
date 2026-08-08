@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Deskcall Nasabah - PNM ULaMM Umbulharjo</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        pnm: {
+                            blue: '#00529C',
+                            darkblue: '#003366',
+                            light: '#E6F0FA',
+                            accent: '#F37021'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <!-- KONFIGURASI URL GOOGLE APPS SCRIPT -->
+    <script>
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxXKNTpMc70ndUSJZi7GdaHiQmgUZvBwWVjtiIgAIHvXwrJX6HjWno9N60X-GYAGvZGbg/exec";
+    </script>
+
+    <!-- Header Navigation -->
+    <header class="bg-gradient-to-r from-pnm-darkblue via-pnm-blue to-blue-800 text-white shadow-lg sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white p-2 rounded-lg shadow-md flex items-center justify-center w-10 h-10">
+                    <i class="fa-solid fa-headset text-pnm-blue text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight tracking-wide">MONITORING DESKCALL NASABAH</h1>
+                    <p class="text-xs text-blue-100 flex items-center gap-1.5 opacity-90">
+                        <span>PT Permodalan Nasional Madani</span>
+                        <span>•</span>
+                        <span class="text-amber-300 font-medium">ULaMM Umbulharjo Yogyakarta</span>
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button onclick="loadData()" id="refreshBtn" class="bg-white/10 hover:bg-white/20 active:scale-95 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition border border-white/20 shadow-sm">
+                    <i class="fa-solid fa-rotate-right" id="refreshIcon"></i>
+                    <span class="hidden sm:inline">Refresh Data</span>
+                </button>
+                <button onclick="openTemplateModal()" class="bg-amber-500 hover:bg-amber-600 active:scale-95 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition shadow-md">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span class="hidden sm:inline">Template Pesan</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow w-full space-y-6">
+
+        <!-- Banner Alert Sync Status -->
+        <div id="statusAlert" class="hidden rounded-xl p-4 transition-all duration-300 shadow-sm flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i id="statusIcon" class="fa-solid text-lg"></i>
+                <span id="statusMessage" class="text-sm font-medium"></span>
+            </div>
+            <button onclick="document.getElementById('statusAlert').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 text-sm">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- Top Overview & Quick Card Section -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <!-- Card Total Nasabah -->
+            <div class="glass-card rounded-2xl p-5 shadow-sm border-l-4 border-l-blue-600 flex items-center justify-between relative overflow-hidden group hover:shadow-md transition">
+                <div class="space-y-1">
+                    <p class="text-xs uppercase tracking-wider font-semibold text-slate-500">Total Nasabah</p>
+                    <h2 class="text-3xl font-bold text-slate-800" id="cardTotalNasabah">0</h2>
+                    <p class="text-[11px] text-slate-400">Terdaftar di sheet OPERATOR</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl group-hover:scale-110 transition">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+            </div>
+
+            <!-- Card Nasabah Lewat Jatuh Tempo -->
+            <div class="glass-card rounded-2xl p-5 shadow-sm border-l-4 border-l-rose-500 flex items-center justify-between relative overflow-hidden group hover:shadow-md transition">
+                <div class="space-y-1">
+                    <p class="text-xs uppercase tracking-wider font-semibold text-rose-600">Lewat Jatuh Tempo (Menunggak)</p>
+                    <h2 class="text-3xl font-bold text-rose-600" id="cardLewatJT">0</h2>
+                    <p class="text-[11px] text-slate-400">Jatuh tempo &lt; hari ini</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl group-hover:scale-110 transition">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+            </div>
+
+            <!-- Card Summary Quick Action -->
+            <div class="glass-card rounded-2xl p-5 shadow-sm border-l-4 border-l-emerald-500 flex items-center justify-between relative overflow-hidden group hover:shadow-md transition">
+                <div class="space-y-1">
+                    <p class="text-xs uppercase tracking-wider font-semibold text-emerald-600">Jatuh Tempo Hari Ini (H-0)</p>
+                    <h2 class="text-3xl font-bold text-slate-800" id="cardHariIni">0</h2>
+                    <p class="text-[11px] text-slate-400">Perlu penanganan prioritas</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl group-hover:scale-110 transition">
+                    <i class="fa-solid fa-calendar-day"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter & Search Section -->
+        <div class="glass-card rounded-2xl p-5 shadow-sm space-y-4">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-filter text-pnm-blue"></i>
+                    <h3 class="font-bold text-slate-800 text-sm">FILTER DATA NASABAH</h3>
+                </div>
+                <!-- Input Cari Nama dengan Autocomplete Suggestion -->
+                <div class="w-full md:w-80">
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Cari / Ketik Nama Nasabah</label>
+                    <div class="relative">
+                        <input type="text" id="inputNasabah" list="nasabahDatalist" oninput="onNasabahInput()" placeholder="Ketik nama nasabah..." class="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-300 text-slate-700 text-xs rounded-xl focus:ring-2 focus:ring-pnm-blue focus:border-pnm-blue outline-none transition font-medium">
+                        <datalist id="nasabahDatalist"></datalist>
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+                        <button onclick="clearNasabahInput()" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 text-xs">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Buttons Horizon -->
+            <div class="flex flex-wrap gap-2 pt-1" id="filterButtonsGroup">
+                <button onclick="setFilter('ALL')" id="btn-ALL" class="filter-btn active px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition flex items-center gap-1.5 bg-pnm-blue text-white border-pnm-blue shadow-sm">
+                    <i class="fa-solid fa-layer-group"></i> ALL Nasabah
+                </button>
+                <button onclick="setFilter('H-7')" id="btn-H-7" class="filter-btn px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition flex items-center gap-1.5 bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200">
+                    H-7
+                </button>
+                <button onclick="setFilter('H-3')" id="btn-H-3" class="filter-btn px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition flex items-center gap-1.5 bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200">
+                    H-3
+                </button>
+                <button onclick="setFilter('H-1')" id="btn-H-1" class="filter-btn px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition flex items-center gap-1.5 bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100">
+                    H-1
+                </button>
+                <button onclick="setFilter('H-0')" id="btn-H-0" class="filter-btn px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100">
+                    <i class="fa-solid fa-clock"></i> H-0 (Hari Ini)
+                </button>
+                <button onclick="setFilter('H+1')" id="btn-H+1" class="filter-btn px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition flex items-center gap-1.5 bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100">
+                    H+1
+                </button>
+                <button onclick="setFilter('H+2')" id="btn-H+2" class="filter-btn px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition flex items-center gap-1.5 bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100">
+                    H+2
+                </button>
+                <button onclick="setFilter('H+3')" id="btn-H+3" class="filter-btn px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition flex items-center gap-1.5 bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100">
+                    H+3
+                </button>
+                <button onclick="setFilter('H+5')" id="btn-H+5" class="filter-btn px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition flex items-center gap-1.5 bg-rose-100 text-rose-800 border-rose-300 hover:bg-rose-200">
+                    H+5 (Tunggakan)
+                </button>
+            </div>
+        </div>
+
+        <!-- Selected Nasabah Detail Card -->
+        <div id="selectedNasabahCard" class="hidden bg-gradient-to-br from-blue-900 to-pnm-darkblue text-white rounded-2xl p-6 shadow-xl border border-blue-700 relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 opacity-10 text-9xl text-white pointer-events-none">
+                <i class="fa-solid fa-address-card"></i>
+            </div>
+            
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+                <div class="space-y-4 flex-grow">
+                    <div class="flex items-center gap-2">
+                        <span class="bg-amber-400 text-slate-900 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">Nasabah Terpilih</span>
+                        <span id="cardDetailJTBadge" class="bg-blue-800 text-blue-200 text-xs px-2.5 py-0.5 rounded-full border border-blue-600 font-medium">JT: -</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        <!-- Nama Card -->
+                        <div class="bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/10">
+                            <p class="text-[10px] text-blue-200 uppercase font-semibold">Nama Nasabah</p>
+                            <p id="cardDetailNama" class="text-base font-bold text-white truncate">-</p>
+                        </div>
+                        <!-- Plafond (Kolom F) -->
+                        <div class="bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/10">
+                            <p class="text-[10px] text-blue-200 uppercase font-semibold">Plafond</p>
+                            <p id="cardDetailPlafond" class="text-base font-bold text-sky-200">-</p>
+                        </div>
+                        <!-- Outstanding / OS (Kolom G) -->
+                        <div class="bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/10">
+                            <p class="text-[10px] text-blue-200 uppercase font-semibold">Outstanding (OS)</p>
+                            <p id="cardDetailOS" class="text-base font-bold text-amber-300">-</p>
+                        </div>
+                        <!-- Total Tagihan (Kolom C) Editable -->
+                        <div class="bg-white/10 backdrop-blur-md rounded-xl p-3 border border-amber-400/40 focus-within:border-amber-400 transition">
+                            <label class="text-[10px] text-amber-200 uppercase font-semibold flex items-center justify-between">
+                                <span>Total Tagihan (Adj)</span>
+                                <i class="fa-solid fa-pen-to-square text-amber-300 text-xs"></i>
+                            </label>
+                            <div class="flex items-center mt-0.5">
+                                <span class="text-amber-300 font-bold text-sm mr-1">Rp</span>
+                                <input type="text" id="cardDetailTagihanInput" class="bg-transparent font-bold text-base text-white outline-none w-full border-b border-amber-300/50 focus:border-amber-300 pb-0.5" placeholder="0" oninput="formatCurrencyInput(this)">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Button Group -->
+                <div class="flex flex-col sm:flex-row lg:flex-col gap-2.5 min-w-[210px] justify-center">
+                    <button onclick="sendDirectWAFromCard()" class="bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white py-2.5 px-4 rounded-xl font-semibold text-xs flex items-center justify-center gap-2 shadow-lg transition">
+                        <i class="fa-brands fa-whatsapp text-base"></i>
+                        <span>Kirim WA Web (Direct Room)</span>
+                    </button>
+                    <button onclick="sendFonnteFromCard()" id="btnCardFonnte" class="bg-blue-600 hover:bg-blue-500 active:scale-95 text-white py-2.5 px-4 rounded-xl font-semibold text-xs flex items-center justify-center gap-2 shadow-lg transition">
+                        <i class="fa-solid fa-paper-plane text-xs"></i>
+                        <span>Kirim via Fonnte API</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table Rincian Data Nasabah -->
+        <div class="glass-card rounded-2xl shadow-sm overflow-hidden border border-slate-200">
+            <div class="px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50">
+                <div>
+                    <h3 class="font-bold text-slate-800 text-base">Rincian Data Deskcall</h3>
+                    <p class="text-xs text-slate-500">Daftar lengkap tagihan nasabah ULaMM Umbulharjo</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span id="dataCountBadge" class="bg-blue-100 text-pnm-blue font-bold text-xs px-3 py-1 rounded-full">
+                        0 Nasabah
+                    </span>
+                </div>
+            </div>
+
+            <!-- Table Container -->
+            <div class="overflow-x-auto custom-scrollbar">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">
+                            <th class="py-3.5 px-4">Nama Nasabah</th>
+                            <th class="py-3.5 px-3">Tanggal JT</th>
+                            <th class="py-3.5 px-3">Plafond</th>
+                            <th class="py-3.5 px-3 bg-slate-200/60 text-slate-900 font-extrabold">Outstanding (OS)</th>
+                            <th class="py-3.5 px-3">Angsuran Normal</th>
+                            <th class="py-3.5 px-3">Nomor BRIVA</th>
+                            <th class="py-3.5 px-3">Nomor HP</th>
+                            <th class="py-3.5 px-4 text-center">Aksi Kirim Pesan</th>
+                            <th class="py-3.5 px-4">Riwayat / Status Deskcall</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-slate-100">
+                        <!-- Loading State -->
+                        <tr id="loadingRow">
+                            <td colspan="9" class="py-12 text-center text-slate-400">
+                                <div class="inline-flex flex-col items-center gap-3">
+                                    <i class="fa-solid fa-spinner fa-spin text-3xl text-pnm-blue"></i>
+                                    <span class="text-sm font-medium">Memuat data dari Google Spreadsheet...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-800 text-slate-400 text-xs py-4 text-center mt-auto border-t border-slate-700">
+        <p>© 2026 PT Permodalan Nasional Madani - ULaMM Umbulharjo. All rights reserved.</p>
+    </footer>
+
+    <!-- MODAL CUSTOMIZATION TEMPLATE PESAN -->
+    <div id="templateModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-pnm-blue"></i>
+                    Kustomisasi Template Pesan
+                </h3>
+                <button onclick="closeTemplateModal()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <p class="text-xs text-slate-500">Gunakan variabel placeholder berikut: <code class="bg-slate-100 px-1.5 py-0.5 rounded text-blue-600 font-semibold">(NAMA)</code>, <code class="bg-slate-100 px-1.5 py-0.5 rounded text-blue-600 font-semibold">(TANGGAL JT)</code>, <code class="bg-slate-100 px-1.5 py-0.5 rounded text-blue-600 font-semibold">(TAGIHAN)</code>, <code class="bg-slate-100 px-1.5 py-0.5 rounded text-blue-600 font-semibold">(BRIVA)</code>.</p>
+
+            <textarea id="templateTextarea" rows="12" class="w-full p-3 border border-slate-300 rounded-xl text-xs font-mono bg-slate-50 text-slate-800 focus:ring-2 focus:ring-pnm-blue outline-none custom-scrollbar leading-relaxed"></textarea>
+
+            <div class="flex items-center justify-between pt-2">
+                <button onclick="resetDefaultTemplate()" class="text-xs text-rose-600 font-semibold hover:underline">
+                    Reset ke Standar
+                </button>
+                <div class="flex gap-2">
+                    <button onclick="closeTemplateModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-xl transition">
+                        Batal
+                    </button>
+                    <button onclick="saveTemplate()" class="px-4 py-2 bg-pnm-blue hover:bg-pnm-darkblue text-white text-xs font-semibold rounded-xl shadow transition">
+                        Simpan Template
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT APP CORE LOGIC -->
+    <script>
+        // Global State Variables
+        let rawData = [];
+        let filteredData = [];
+        let currentFilter = 'ALL';
+        let selectedNasabahIndex = null;
+
+        const DEFAULT_TEMPLATE = `PT PERMODALAN NASIONAL MADANI
+ULaMM Umbulharjo
+
+Selamat pagi,
+Yth. Bapak/Ibu (NAMA)
+
+Semoga Bapak/Ibu senantiasa dalam keadaan sehat selalu.
+Kami informasikan bahwa tagihan pembiayaan PNM–ULaMM Umbulharjo atas nama Bapak/Ibu jatuh tempo (TANGGAL JT).
+Kami menghimbau agar Bapak/Ibu dapat segera melakukan pembayaran kewajiban angsuran/tunggakan sebesar
+(TAGIHAN)
+
+Pembayaran via BRIVA:
+(BRIVA)
+
+Abaikan pesan ini apabila sudah melakukan pembayaran
+
+Terima kasih telah menjadi Nasabah setia
+PNM–ULaMM Umbulharjo Yogyakarta.`;
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', () => {
+            initTemplate();
+            loadData();
+        });
+
+        // Template Management
+        function initTemplate() {
+            if (!localStorage.getItem('pnm_wa_template')) {
+                localStorage.setItem('pnm_wa_template', DEFAULT_TEMPLATE);
+            }
+        }
+
+        function openTemplateModal() {
+            document.getElementById('templateTextarea').value = localStorage.getItem('pnm_wa_template') || DEFAULT_TEMPLATE;
+            document.getElementById('templateModal').classList.remove('hidden');
+        }
+
+        function closeTemplateModal() {
+            document.getElementById('templateModal').classList.add('hidden');
+        }
+
+        function resetDefaultTemplate() {
+            document.getElementById('templateTextarea').value = DEFAULT_TEMPLATE;
+        }
+
+        function saveTemplate() {
+            const val = document.getElementById('templateTextarea').value;
+            localStorage.setItem('pnm_wa_template', val);
+            closeTemplateModal();
+            showAlert('Template pesan berhasil diperbarui!', 'success');
+        }
+
+        function getFormattedMessage(nasabah, customTagihan = null) {
+            let template = localStorage.getItem('pnm_wa_template') || DEFAULT_TEMPLATE;
+            const tagihanVal = customTagihan !== null ? customTagihan : unformatRupiah(nasabah.angsuran);
+            
+            return template
+                .replace(/\(NAMA\)/g, nasabah.nama || '')
+                .replace(/\(TANGGAL JT\)/g, nasabah.tanggalJt || '')
+                .replace(/\(TAGIHAN\)/g, "Rp " + formatRupiah(tagihanVal))
+                .replace(/\(BRIVA\)/g, nasabah.briva || '-');
+        }
+
+        // Fetch Data from Google Apps Script Backend
+        async function loadData() {
+            showLoading(true);
+            const refreshIcon = document.getElementById('refreshIcon');
+            refreshIcon.classList.add('fa-spin');
+
+            try {
+                const response = await fetch(APPS_SCRIPT_URL);
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    rawData = result.data;
+                    updateDashboardCards();
+                    populateDatalist();
+                    applyFilterAndRender();
+                    showAlert('Data berhasil disinkronisasi dari Spreadsheet.', 'success');
+                } else {
+                    showAlert('Gagal mengambil data: ' + result.message, 'error');
+                }
+            } catch (err) {
+                console.error("Fetch error:", err);
+                showAlert('Gagal terhubung ke Apps Script Backend.', 'error');
+            } finally {
+                showLoading(false);
+                refreshIcon.classList.remove('fa-spin');
+            }
+        }
+
+        // Helper date parsing (DD/MM/YYYY)
+        function parseTanggal(strDate) {
+            if (!strDate) return new Date(0);
+            const parts = strDate.split('/');
+            if (parts.length === 3) {
+                return new Date(parts[2], parts[1] - 1, parts[0]);
+            }
+            return new Date(strDate);
+        }
+
+        function getDaysDiff(targetDateStr) {
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            
+            const target = parseTanggal(targetDateStr);
+            target.setHours(0,0,0,0);
+
+            const diffTime = target - today;
+            return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        }
+
+        // Filter Logic
+        function setFilter(filterType) {
+            currentFilter = filterType;
+            
+            // Highlight Button
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.className = "filter-btn px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition flex items-center gap-1.5 bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200";
+            });
+
+            const activeBtn = document.getElementById(`btn-${filterType}`);
+            if (activeBtn) {
+                activeBtn.className = "filter-btn active px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition flex items-center gap-1.5 bg-pnm-blue text-white border-pnm-blue shadow-sm";
+            }
+
+            // Reset Input Search
+            document.getElementById('inputNasabah').value = "";
+            document.getElementById('selectedNasabahCard').classList.add('hidden');
+
+            applyFilterAndRender();
+        }
+
+        function applyFilterAndRender() {
+            if (currentFilter === 'ALL') {
+                filteredData = [...rawData];
+            } else {
+                const targetDays = {
+                    'H-7': 7, 'H-3': 3, 'H-1': 1, 'H-0': 0,
+                    'H+1': -1, 'H+2': -2, 'H+3': -3, 'H+5': -5
+                }[currentFilter];
+
+                filteredData = rawData.filter(item => {
+                    const diff = getDaysDiff(item.tanggalJt);
+                    return diff === targetDays;
+                });
+            }
+
+            renderTable(filteredData);
+        }
+
+        // Dashboard Summary Cards
+        function updateDashboardCards() {
+            document.getElementById('cardTotalNasabah').innerText = rawData.length;
+
+            let countLewat = 0;
+            let countHariIni = 0;
+
+            rawData.forEach(item => {
+                const diff = getDaysDiff(item.tanggalJt);
+                if (diff < 0) countLewat++;
+                if (diff === 0) countHariIni++;
+            });
+
+            document.getElementById('cardLewatJT').innerText = countLewat;
+            document.getElementById('cardHariIni').innerText = countHariIni;
+        }
+
+        // Populate Datalist Autocomplete
+        function populateDatalist() {
+            const datalist = document.getElementById('nasabahDatalist');
+            datalist.innerHTML = '';
+
+            rawData.forEach((item) => {
+                const opt = document.createElement('option');
+                opt.value = item.nama;
+                opt.label = `JT: ${item.tanggalJt} | OS: Rp ${item.os}`;
+                datalist.appendChild(opt);
+            });
+        }
+
+        // Search Input Change Handler
+        function onNasabahInput() {
+            const inputVal = document.getElementById('inputNasabah').value.trim().toLowerCase();
+            
+            if (!inputVal) {
+                selectedNasabahIndex = null;
+                document.getElementById('selectedNasabahCard').classList.add('hidden');
+                applyFilterAndRender();
+                return;
+            }
+
+            // Find match
+            const matchedIndex = rawData.findIndex(r => r.nama.toLowerCase() === inputVal);
+            
+            if (matchedIndex !== -1) {
+                selectedNasabahIndex = matchedIndex;
+                const nasabah = rawData[matchedIndex];
+
+                // Display in Selected Card
+                document.getElementById('cardDetailNama').innerText = nasabah.nama;
+                document.getElementById('cardDetailJTBadge').innerText = `JT: ${nasabah.tanggalJt}`;
+                document.getElementById('cardDetailPlafond').innerText = "Rp " + nasabah.plafond;
+                document.getElementById('cardDetailOS').innerText = "Rp " + nasabah.os;
+                document.getElementById('cardDetailTagihanInput').value = nasabah.angsuran;
+
+                document.getElementById('selectedNasabahCard').classList.remove('hidden');
+                renderTable([nasabah]);
+            } else {
+                // Partial filter table
+                const partialMatches = rawData.filter(r => r.nama.toLowerCase().includes(inputVal));
+                renderTable(partialMatches);
+            }
+        }
+
+        function clearNasabahInput() {
+            document.getElementById('inputNasabah').value = '';
+            onNasabahInput();
+        }
+
+        // Render Table Data
+        function renderTable(dataList) {
+            const tbody = document.getElementById('tableBody');
+            document.getElementById('dataCountBadge').innerText = `${dataList.length} Nasabah`;
+
+            if (dataList.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="py-10 text-center text-slate-400">
+                            <i class="fa-solid fa-folder-open text-3xl mb-2 block"></i>
+                            Tidak ada data nasabah untuk kriteria filter ini.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            let html = '';
+            dataList.forEach((item) => {
+                const originalIndex = rawData.findIndex(r => r.rowIndex === item.rowIndex);
+                const diff = getDaysDiff(item.tanggalJt);
+
+                // Highlight Status
+                let jtBadgeClass = 'bg-slate-100 text-slate-600';
+                if (diff < 0) jtBadgeClass = 'bg-rose-100 text-rose-700 font-bold';
+                else if (diff === 0) jtBadgeClass = 'bg-emerald-100 text-emerald-700 font-bold';
+                else if (diff <= 3) jtBadgeClass = 'bg-amber-100 text-amber-700 font-medium';
+
+                const formattedHp = sanitizePhoneNumber(item.nomorHp);
+
+                html += `
+                    <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                        <!-- Nama Nasabah -->
+                        <td class="py-3.5 px-4 font-semibold text-slate-800">
+                            ${item.nama}
+                        </td>
+                        <!-- Tanggal JT -->
+                        <td class="py-3.5 px-3">
+                            <span class="px-2.5 py-1 rounded-lg text-[11px] ${jtBadgeClass}">
+                                ${item.tanggalJt}
+                            </span>
+                        </td>
+                        <!-- Plafond (Kolom F) -->
+                        <td class="py-3.5 px-3 text-slate-600 font-medium">
+                            Rp ${item.plafond}
+                        </td>
+                        <!-- Outstanding / OS (Kolom G) - HIGHLIGHT BOLD -->
+                        <td class="py-3.5 px-3 font-bold text-slate-900 bg-amber-50/50">
+                            Rp ${item.os}
+                        </td>
+                        <!-- Angsuran Normal (Kolom C) Editable -->
+                        <td class="py-3.5 px-3">
+                            <div class="flex items-center gap-1">
+                                <span class="text-slate-400">Rp</span>
+                                <input type="text" id="tagihan-input-${originalIndex}" value="${item.angsuran}" 
+                                    class="w-28 px-2 py-1 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-pnm-blue outline-none"
+                                    oninput="formatCurrencyInput(this)">
+                            </div>
+                        </td>
+                        <!-- BRIVA -->
+                        <td class="py-3.5 px-3 font-mono text-slate-600">
+                            ${item.briva || '<span class="text-slate-300">#N/A</span>'}
+                        </td>
+                        <!-- Nomor HP -->
+                        <td class="py-3.5 px-3 font-mono text-slate-600">
+                            ${formattedHp}
+                        </td>
+                        <!-- Kolom Aksi Kirim Pesan -->
+                        <td class="py-3.5 px-4">
+                            <div class="flex items-center justify-center gap-1.5">
+                                <!-- WA Web Direct -->
+                                <button onclick="sendWAWebDirect(${originalIndex})" title="Kirim via WhatsApp Web (Direct Chat)" 
+                                    class="bg-emerald-500 hover:bg-emerald-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 shadow-sm transition active:scale-95">
+                                    <i class="fa-brands fa-whatsapp text-sm"></i>
+                                    <span>WA Web</span>
+                                </button>
+
+                                <!-- Fonnte API -->
+                                <button onclick="sendFonnteSingle(${originalIndex})" id="btn-fonnte-${originalIndex}" title="Kirim otomatis via Fonnte API" 
+                                    class="bg-blue-600 hover:bg-pnm-darkblue text-white px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 shadow-sm transition active:scale-95">
+                                    <i class="fa-solid fa-paper-plane text-xs"></i>
+                                    <span>Fonnte</span>
+                                </button>
+                            </div>
+                        </td>
+                        <!-- Riwayat / Status Deskcall (Kolom I) -->
+                        <td class="py-3.5 px-4" id="log-cell-${originalIndex}">
+                            <div class="text-[11px] text-slate-600">
+                                ${item.logKeterangan ? `<span class="bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-200 font-medium">${item.logKeterangan}</span>` : '<span class="text-slate-300 italic">Belum ada aksi</span>'}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+        }
+
+        // WhatsApp Web Direct Action
+        function sendWAWebDirect(index) {
+            const nasabah = rawData[index];
+            const hp = sanitizePhoneNumber(nasabah.nomorHp);
+            if (!hp) {
+                alert("Nomor HP tidak valid!");
+                return;
+            }
+
+            const inputEl = document.getElementById(`tagihan-input-${index}`);
+            const customTagihan = inputEl ? unformatRupiah(inputEl.value) : unformatRupiah(nasabah.angsuran);
+
+            const message = getFormattedMessage(nasabah, customTagihan);
+            const encodedMsg = encodeURIComponent(message);
+            const waUrl = `https://web.whatsapp.com/send?phone=${hp}&text=${encodedMsg}`;
+
+            window.open(waUrl, '_blank');
+
+            const logText = `[${getTodayFormatted()}] Sent via WA Web`;
+            updateLogToSpreadsheet(nasabah.rowIndex, logText, index);
+        }
+
+        // Fonnte API Action
+        async function sendFonnteSingle(index) {
+            const nasabah = rawData[index];
+            const hp = sanitizePhoneNumber(nasabah.nomorHp);
+            if (!hp) {
+                showAlert("Nomor HP tidak valid!", "error");
+                return;
+            }
+
+            const btn = document.getElementById(`btn-fonnte-${index}`);
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Sending`;
+            }
+
+            const inputEl = document.getElementById(`tagihan-input-${index}`);
+            const customTagihan = inputEl ? unformatRupiah(inputEl.value) : unformatRupiah(nasabah.angsuran);
+            const message = getFormattedMessage(nasabah, customTagihan);
+
+            try {
+                const response = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        action: 'sendFonnte',
+                        target: hp,
+                        message: message,
+                        nama: nasabah.nama,
+                        rowIndex: nasabah.rowIndex
+                    })
+                });
+
+                const res = await response.json();
+                if (res.status === 'success') {
+                    showAlert(`Pesan Fonnte berhasil dikirim ke ${nasabah.nama}!`, 'success');
+                    updateLogCell(index, `[${getTodayFormatted()}] Sent via Fonnte API`);
+                } else {
+                    showAlert(`Gagal kirim via Fonnte: ${res.message}`, 'error');
+                }
+            } catch (err) {
+                console.error("Fonnte error:", err);
+                showAlert("Gagal menghubungi server Apps Script.", "error");
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fa-solid fa-paper-plane text-xs"></i> <span>Fonnte</span>`;
+                }
+            }
+        }
+
+        // Action from Selected Top Card
+        function sendDirectWAFromCard() {
+            if (selectedNasabahIndex === null) return;
+            const inputVal = document.getElementById('cardDetailTagihanInput').value;
+            const customTagihan = unformatRupiah(inputVal);
+
+            const nasabah = rawData[selectedNasabahIndex];
+            const hp = sanitizePhoneNumber(nasabah.nomorHp);
+            const message = getFormattedMessage(nasabah, customTagihan);
+
+            window.open(`https://web.whatsapp.com/send?phone=${hp}&text=${encodeURIComponent(message)}`, '_blank');
+            updateLogToSpreadsheet(nasabah.rowIndex, `[${getTodayFormatted()}] Sent via WA Web`, selectedNasabahIndex);
+        }
+
+        async function sendFonnteFromCard() {
+            if (selectedNasabahIndex === null) return;
+            const btn = document.getElementById('btnCardFonnte');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processing...`;
+
+            const inputVal = document.getElementById('cardDetailTagihanInput').value;
+            const customTagihan = unformatRupiah(inputVal);
+
+            const nasabah = rawData[selectedNasabahIndex];
+            const hp = sanitizePhoneNumber(nasabah.nomorHp);
+            const message = getFormattedMessage(nasabah, customTagihan);
+
+            try {
+                const response = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        action: 'sendFonnte',
+                        target: hp,
+                        message: message,
+                        nama: nasabah.nama,
+                        rowIndex: nasabah.rowIndex
+                    })
+                });
+
+                const res = await response.json();
+                if (res.status === 'success') {
+                    showAlert(`Pesan Fonnte dikirim ke ${nasabah.nama}!`, 'success');
+                    updateLogCell(selectedNasabahIndex, `[${getTodayFormatted()}] Sent via Fonnte API`);
+                } else {
+                    showAlert(`Gagal Fonnte: ${res.message}`, 'error');
+                }
+            } catch (e) {
+                showAlert("Gagal memproses request.", "error");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-paper-plane text-xs"></i> <span>Kirim via Fonnte API</span>`;
+            }
+        }
+
+        // Update Log (Kolom I) di Spreadsheet via Backend
+        async function updateLogToSpreadsheet(rowIndex, logText, index) {
+            updateLogCell(index, logText);
+
+            try {
+                await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        action: 'updateLog',
+                        rowIndex: rowIndex,
+                        logText: logText
+                    })
+                });
+            } catch (e) {
+                console.error("Gagal update log ke spreadsheet:", e);
+            }
+        }
+
+        function updateLogCell(index, text) {
+            rawData[index].logKeterangan = text;
+            const logCell = document.getElementById(`log-cell-${index}`);
+            if (logCell) {
+                logCell.innerHTML = `<span class="bg-emerald-50 text-emerald-700 px-2 py-1 rounded border border-emerald-200 font-medium">${text}</span>`;
+            }
+        }
+
+        // Utility Helpers
+        function sanitizePhoneNumber(hp) {
+            if (!hp) return '';
+            let str = hp.toString().replace(/[^0-9]/g, '');
+            if (str.startsWith('0')) {
+                str = '62' + str.slice(1);
+            }
+            return str;
+        }
+
+        function formatRupiah(number) {
+            if (isNaN(number) || number === null) return '0';
+            return new Intl.NumberFormat('id-ID').format(number);
+        }
+
+        function unformatRupiah(str) {
+            if (!str) return 0;
+            return parseInt(str.toString().replace(/[^0-9]/g, '')) || 0;
+        }
+
+        function formatCurrencyInput(input) {
+            let val = unformatRupiah(input.value);
+            input.value = formatRupiah(val);
+        }
+
+        function getTodayFormatted() {
+            const d = new Date();
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            const hours = String(d.getHours()).padStart(2, '0');
+            const mins = String(d.getMinutes()).padStart(2, '0');
+            return `${day}/${month}/${year} ${hours}:${mins}`;
+        }
+
+        function showLoading(show) {
+            const row = document.getElementById('loadingRow');
+            if (row) {
+                row.style.display = show ? 'table-row' : 'none';
+            }
+        }
+
+        function showAlert(msg, type = 'info') {
+            const alertEl = document.getElementById('statusAlert');
+            const iconEl = document.getElementById('statusIcon');
+            const msgEl = document.getElementById('statusMessage');
+
+            alertEl.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-800', 'border-emerald-200', 'bg-rose-50', 'text-rose-800', 'border-rose-200');
+
+            if (type === 'success') {
+                alertEl.classList.add('bg-emerald-50', 'text-emerald-800', 'border', 'border-emerald-200');
+                iconEl.className = 'fa-solid fa-circle-check text-emerald-600 text-lg';
+            } else if (type === 'error') {
+                alertEl.classList.add('bg-rose-50', 'text-rose-800', 'border', 'border-rose-200');
+                iconEl.className = 'fa-solid fa-circle-xmark text-rose-600 text-lg';
+            }
+
+            msgEl.innerText = msg;
+            alertEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+            setTimeout(() => {
+                alertEl.classList.add('hidden');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
