@@ -765,40 +765,47 @@ PNM–ULaMM Umbulharjo Yogyakarta.`;
             window.open(url, '_blank');
         }
 
-        async function sendFonnteDirect(index) {
-            const item = rawData[index];
-            if (!item) return;
+       async function sendFonnteDirect(index) {
+    const item = rawData[index];
+    if (!item) return;
 
-            const inputElem = document.getElementById(`tagihan-input-${index}`);
-            const customTagihan = inputElem ? unformatRupiah(inputElem.value) : null;
-            
-            const msg = getFormattedMessage(item, customTagihan);
-            const phone = sanitizePhoneNumber(item.nomorHp);
+    const inputElem = document.getElementById(`tagihan-input-${index}`);
+    const customTagihan = inputElem ? unformatRupiah(inputElem.value) : null;
+    
+    const msg = getFormattedMessage(item, customTagihan);
+    const phone = sanitizePhoneNumber(item.nomorHp);
 
-            if (!phone) {
-                showAlert('Nomor HP tidak valid!', 'error');
-                return;
-            }
+    if (!phone) {
+        showAlert('Nomor HP tidak valid!', 'error');
+        return;
+    }
 
-            // Catat Riwayat
-            logActionToBackend(index, 'Fonnte');
+    logActionToBackend(index, 'Fonnte');
 
-            try {
-                showAlert(`Mengirim pesan Fonnte ke ${item.nama}...`, 'info');
-                await fetch(APPS_SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'sendFonnte',
-                        target: phone,
-                        message: msg,
-                        rowIndex: item.rowIndex
-                    })
-                });
-                showAlert(`Sinyal pengiriman Fonnte berhasil dikirim ke ${item.nama}`, 'success');
-            } catch (err) {
-                showAlert(`Pengiriman Fonnte diproses ke ${item.nama}`, 'success');
-            }
-        }
+    try {
+        showAlert(`Mengirim pesan Fonnte ke ${item.nama}...`, 'info');
+        
+        // Gunakan mode no-cors dan redirect follow untuk Google Apps Script
+        await fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: {
+                'Content-Type': 'text/plain'
+            },
+            body: JSON.stringify({
+                action: 'sendFonnte',
+                target: phone,
+                message: msg,
+                rowIndex: item.rowIndex
+            })
+        });
+        
+        showAlert(`Sinyal pengiriman Fonnte berhasil dikirim ke ${item.nama}`, 'success');
+    } catch (err) {
+        console.error("Error Fonnte:", err);
+        showAlert(`Gagal mengirim Fonnte ke ${item.nama}`, 'error');
+    }
+}
 
         function sendDirectWAFromCard() {
             if (selectedNasabahIndex === null) return;
