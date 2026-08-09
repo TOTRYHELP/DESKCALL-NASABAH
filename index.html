@@ -56,7 +56,7 @@
 
     <!-- KONFIGURASI URL GOOGLE APPS SCRIPT -->
     <script>
-        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxxU1wG7YjH0yMO4RhNLsiNFloF2tJUrPIM7IuOkkcLDinOagmWAg6XhuP2hEPfffA3uA/exec";
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx5tU5-KyV0L7hb98roT9Ydezgcx4fDPwWaCb8EhdjS9vFthdlvQrhsRATuZr8ygggt0A/exec";
     </script>
 
     <!-- Header Navigation -->
@@ -780,29 +780,24 @@ PNM–ULaMM Umbulharjo Yogyakarta.`;
         return;
     }
 
-    logActionToBackend(index, 'Fonnte');
-
     try {
         showAlert(`Mengirim pesan Fonnte ke ${item.nama}...`, 'info');
         
-        // Gunakan mode no-cors dan redirect follow untuk Google Apps Script
         await fetch(APPS_SCRIPT_URL, {
             method: 'POST',
-            mode: 'no-cors',
-            headers: {
-                'Content-Type': 'text/plain'
-            },
             body: JSON.stringify({
                 action: 'sendFonnte',
                 target: phone,
                 message: msg,
+                nama: item.nama,
                 rowIndex: item.rowIndex
             })
         });
-        
-        showAlert(`Sinyal pengiriman Fonnte berhasil dikirim ke ${item.nama}`, 'success');
+
+        showAlert(`Sinyal Fonnte berhasil dikirim ke ${item.nama}`, 'success');
+        logActionToBackend(index, 'Fonnte');
     } catch (err) {
-        console.error("Error Fonnte:", err);
+        console.error("Fonnte error:", err);
         showAlert(`Gagal mengirim Fonnte ke ${item.nama}`, 'error');
     }
 }
